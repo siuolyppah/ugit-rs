@@ -1,15 +1,19 @@
-use std::ops::Deref;
 use crate::fs_tools::dirs::check_init;
 use crate::fs_tools::{dirs, files};
 use crate::objects::blob::BlobObject;
+use crate::objects::manage::tracked::TrackedInObjectDB;
 use crate::objects::tree::TreeObject;
 use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::{Object, Sha1Hash};
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 pub mod ignored;
 pub mod tracked;
 
+/// file(or dir) with given path -> Object
+/// and the object will stored in database.
+///
 /// 1. Get the path of the file to store.
 /// 2. Read the file.
 /// 2. Hash the content of the file using SHA-1.
@@ -19,7 +23,7 @@ pub fn cmd_hash_object(path: PathBuf, obj_type: ObjectTypeLiteral) {
 
     match obj_type {
         ObjectTypeLiteral::Blob => {
-            // should be file.
+            // must be file.
             if !files::is_file_exist(path.clone()) {
                 panic!("the file path {} is wrong.", path.deref().display());
             }
@@ -28,26 +32,25 @@ pub fn cmd_hash_object(path: PathBuf, obj_type: ObjectTypeLiteral) {
             let blob = BlobObject::new(contents);
             let sha1 = blob.sha1();
 
-            blob.set_tracked();
+            blob.save_object_file();
 
             println!("{}", sha1)
         }
 
-        ObjectTypeLiteral::Tree=> {
-            // should be dir.
-            if !dirs::is_dir_exist(path.clone()){
+        ObjectTypeLiteral::Tree => {
+            // must be dir.
+            if !dirs::is_dir_exist(path.clone()) {
                 panic!("the dir path {} is wrong.", path.deref().display());
             }
 
-            let tree = TreeObject::from_origin_path(path);
+            let tree = TreeObject::from_origin_dir(path);
             let sha1 = tree.sha1();
 
-            tree.set_tracked();
+            tree.save_object_file();
 
             println!("{}", sha1);
         }
     }
-
 }
 
 /// This command is the "opposite" of hash-object: it can print an object by its `oid`.
@@ -93,8 +96,8 @@ pub fn cmd_cat_file(oid: String, expected_type: ObjectTypeLiteral) {
 pub fn cmd_write_tree<P: AsRef<Path>>(dir: P) {
     check_init();
 
-    let tree = TreeObject::from_origin_path(dir);
-    tree.set_tracked();
+    let tree = TreeObject::from_origin_dir(dir);
+    tree.save_object_file();
 
     println!("{}", tree.oid());
 }
@@ -102,5 +105,5 @@ pub fn cmd_write_tree<P: AsRef<Path>>(dir: P) {
 /// revert work dir from repo index.
 pub fn cmd_read_tree(oid: String) {
     let tree = TreeObject::from_tree_obj_oid(oid);
-    println!("{:#?}", tree)
+    println!("{}", tree)
 }

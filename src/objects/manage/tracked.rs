@@ -1,36 +1,47 @@
 use crate::fs_tools::{dirs, files};
+use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::{OID, TYPE_CONTENT_SEPARATOR};
 use std::ops::Deref;
 use std::path::PathBuf;
 
+pub trait TrackedInObjectDB {
+    fn save_object_file(&self);
+}
+
 #[inline]
-pub fn object_save_path(oid: OID) -> PathBuf {
+pub fn object_save_path(oid: &OID) -> PathBuf {
     PathBuf::from(format!("{}/{}", &dirs::OBJECTS_DIR_PATH.deref(), oid))
 }
 
-pub fn track_object(content: &[u8], oid: OID) {
+pub fn track_object(content: &[u8], oid: &OID) {
     let obj_path = object_save_path(oid);
 
     files::store_file(obj_path, &content)
 }
 
 /// return `(type literal, obj file content after type literal)`
-pub fn read_obj_content(oid: OID) -> (String, Vec<u8>) {
-    let blob_content = files::read_content_to_end(object_save_path(oid));
+pub fn read_obj_content(oid: &OID) -> (ObjectTypeLiteral, Vec<u8>) {
+    let obj_file_content = files::read_content_to_end(object_save_path(oid));
 
-    if let Some(sep_idx) = blob_content
+    if let Some(sep_idx) = obj_file_content
         .iter()
         .position(|&x| x == TYPE_CONTENT_SEPARATOR)
     {
-        let (type_literal,mut  origin_contents) = blob_content.split_at(sep_idx);
+        let (type_literal, mut origin_contents) = obj_file_content.split_at(sep_idx);
+
+        let type_literal = match ObjectTypeLiteral::try_from(
+            String::from_utf8(type_literal.to_vec()).unwrap().as_str(),
+        ) {
+            Ok(type_literal) => type_literal,
+            Err(_) => {
+                panic!("unknown obj type literal")
+            }
+        };
 
         // skip `0x00`
         origin_contents = &origin_contents[1..];
 
-        (
-            String::from_utf8(type_literal.to_vec()).unwrap(),
-            origin_contents.to_vec(),
-        )
+        (type_literal, origin_contents.to_vec())
     } else {
         panic!("unrecognized object file format.")
     }
