@@ -52,6 +52,15 @@ pub enum Commands {
     /// cargo r -- hash-object foo.txt
     /// ```
     HashObject { file: PathBuf },
+
+    /// Provide content or type and size information for repository objects
+    ///
+    /// # Example
+    ///
+    /// ```shell
+    /// cargo r -- cat-file c254a8e49ef377fe15554aa37ad91bb97264e50f
+    /// ```
+    CatFile { oid: String },
 }
 
 pub fn run() {
@@ -61,6 +70,7 @@ pub fn run() {
         Some(Commands::Init {}) => init::cmd_init(),
         Some(Commands::Add { pathspec }) => add::cmd_add(pathspec),
         Some(Commands::HashObject { file }) => objects::cmd_hash_object(file),
+        Some(Commands::CatFile { oid }) => objects::cmd_cat_file(oid),
         None => {
             // TODO: print help msg
         }

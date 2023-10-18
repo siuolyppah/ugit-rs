@@ -32,6 +32,15 @@ pub fn cmd_hash_object(file: PathBuf) {
     println!("{}", oid);
 }
 
+/// This command is the "opposite" of hash-object: it can print an object by its `oid`.
+/// Its implementation just reads the file at `.ugit/objects/{oid}`.
+pub fn cmd_cat_file(oid: String) {
+    let obj_path = format!("{}/{}", &dirs::OBJECTS_DIR_PATH.deref(), oid);
+    let contents = files::read_content_to_end(obj_path);
+
+    println!("{}", String::from_utf8(contents).unwrap());
+}
+
 /// hexadecimal representation of the result of the SHA-1 hash.
 ///
 /// "OID" - object ID
