@@ -3,19 +3,22 @@
 //! As far as the Object Database is concerned, the content of the object doesn't have
 //! any meaning (just like a filesystem doesn't care about the internal structure of a file).
 
-use crate::crypto;
-use crate::objects::blob::BlobObject;
-use crate::objects::manage::tracked;
+use std::fmt::Debug;
+
 use crate::objects::tree::TreeObject;
 use crate::objects::type_literal::ObjectTypeLiteral;
+use crate::{crypto::Sha1HashAble, objects::blob::BlobObject};
+
+use self::db::{insert::ObjectInsert, query, OID};
 
 pub mod blob;
+pub mod db;
 pub mod manage;
 pub mod tree;
 pub mod tree_entry;
 pub mod type_literal;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum Object {
     BlobObject(BlobObject),
     TreeObject(TreeObject),
@@ -23,59 +26,34 @@ pub enum Object {
 
 pub const TYPE_CONTENT_SEPARATOR: u8 = 0x00;
 
-
 impl Object {
+    /// restore (tree or blob) object with `oid` based on dir `db_path`
     pub fn restore_from_file_with_oid(oid: OID) -> Self {
-        let (type_literal, obj_content_after_type) = tracked::read_obj_content(oid);
+        let (type_literal, obj_content_after_type) = query::read_object_file(&oid);
 
-        if let Ok(type_literal) = ObjectTypeLiteral::try_from(type_literal.as_str()) {
-            match type_literal {
-                ObjectTypeLiteral::Blob => {
-                    Self::BlobObject(BlobObject::new(obj_content_after_type))
-                }
-                ObjectTypeLiteral::Tree => {
-                    Self::TreeObject(TreeObject::from_obj_content(obj_content_after_type))
-                }
+        match type_literal {
+            ObjectTypeLiteral::Blob => Self::BlobObject(BlobObject::new(obj_content_after_type)),
+            ObjectTypeLiteral::Tree => {
+                Self::TreeObject(TreeObject::from_obj_content(obj_content_after_type))
             }
-        } else {
-            panic!("unknown type literal.")
-        }
-    }
-
-    pub fn concatenate_flag_and_bytes(&self) -> Vec<u8>{
-        let mut result = vec![];
-
-        result.extend(ObjectTypeLiteral::from(self.clone()).to_string().as_bytes());
-        result.push(TYPE_CONTENT_SEPARATOR);
-
-        match self {
-            Object::BlobObject(blob) => {
-                result.extend(blob.origin_content().bytes());
-            }
-            Object::TreeObject(tree) => {
-                result.extend(&tree.computed_obj_file_content());
-            }
-        }
-
-        result
-    }
-
-    pub fn set_tracked(&self){
-        match self {
-            Object::BlobObject(blob) => {blob.set_tracked()}
-            Object::TreeObject(tree) => {tree.set_tracked()}
         }
     }
 }
 
-type OID = String;
-
-trait Sha1Hash {
-    fn sha1(&self) -> OID;
+impl ObjectInsert for Object {
+    fn insert_into_db(&self) {
+        match self {
+            Object::BlobObject(blob) => blob.insert_into_db(),
+            Object::TreeObject(tree) => tree.insert_into_db(),
+        }
+    }
 }
 
-
-fn sha1_to_string(buf: &Vec<u8>) -> String {
-    let hash_val = crypto::sha1(buf);
-    hex::encode(&hash_val)
+impl Sha1HashAble for Object {
+    fn sha1(&self) -> OID {
+        match self {
+            Object::BlobObject(blob) => blob.sha1(),
+            Object::TreeObject(tree) => tree.sha1(),
+        }
+    }
 }

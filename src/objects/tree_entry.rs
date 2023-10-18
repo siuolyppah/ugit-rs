@@ -4,26 +4,35 @@ use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::{Object, OID};
 use std::fmt::{Display, Formatter};
 
+/// A `TreeObject` corresponds a list of `Self`.
+///
+/// the `TreeVitrualFileEntry` stored in file with follow format:
+/// `{type literal} {oid} {origin_file_name}`. for example:
+/// - `blob 91a7b14a584645c7b995100223e65f8a5a33b707 cats.txt`
+/// - `tree 53891a3c27b17e0f8fd96c058f968d19e340428d other` (this is a folder)
+/// - `blob fa958e0dd2203e9ad56853a3f51e5945dad317a4 other/dogs.txt`
+
 #[derive(Debug)]
-pub struct TreeEntry {
+pub struct TreeVitrualFileEntry {
     obj_type: ObjectTypeLiteral,
     oid: OID,
+
+    /// for origin file `/xxx/project/f1/abc.txt`, `origin_file_name` will be `f1/abc.txt`.
+    /// the object database will stored in `/xxx/project/{UGIT_REPOSITORY_NAME}`.
     origin_file_name: String,
 }
 
-impl Display for TreeEntry {
+impl Display for TreeVitrualFileEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{} {} {}",
-            self.obj_type,
-            self.oid,
-            self.origin_file_name
+            self.obj_type, self.oid, self.origin_file_name
         )
     }
 }
 
-impl TreeEntry {
+impl TreeVitrualFileEntry {
     pub fn from_blob_obj(blob: BlobObject, origin_file_name: String) -> Self {
         Self {
             obj_type: ObjectTypeLiteral::Blob,
@@ -69,11 +78,11 @@ impl TreeEntry {
         }
     }
 
-    pub fn origin_file_name(&self) -> String{
+    pub fn origin_file_name(&self) -> String {
         self.origin_file_name.clone()
     }
 
-    pub fn corresponding_object(&self) -> Object{
+    pub fn corresponding_object(&self) -> Object {
         Object::restore_from_file_with_oid(self.oid.clone())
     }
 }

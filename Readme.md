@@ -4,7 +4,6 @@ Only support [a useful minimum set of commands in `git`](https://github.com/git/
 
 > this repo was inspired by [`ugit`](https://www.leshenko.net/p/ugit/#)
 
-
 # Workflow Example
 
 > install: `cargo install --path .`
@@ -36,7 +35,7 @@ Initialized empty ugit repository in /tmp/new/.ugit-rs
 
 $ mkdir f1 && mkdir f2
 
-$ echo content1 > f1/a.txt && echo abc > f1/b.txt && echo hhh > f2/a.txt 
+$ echo content1 > f1/a.txt && echo abc > f1/b.txt && echo hhh > f2/a.txt
 
 $ ugit-rs write-tree
 8f87a4d4ce075e840b89cbd52e030f84e1345b1c
@@ -65,3 +64,4 @@ $ ugit-rs read-tree  8f87a4d4ce075e840b89cbd52e030f84e1345b1c
 
 - [ ] write-tree should keep **origin file path after root**.
 - [ ] exclude `.ugit-rs` dir.
+
