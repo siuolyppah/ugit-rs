@@ -21,6 +21,9 @@ pub enum Object {
     TreeObject(TreeObject),
 }
 
+pub const TYPE_CONTENT_SEPARATOR: u8 = 0x00;
+
+
 impl Object {
     pub fn restore_from_file_with_oid(oid: OID) -> Self {
         let (type_literal, obj_content_after_type) = tracked::read_obj_content(oid);
@@ -38,12 +41,39 @@ impl Object {
             panic!("unknown type literal.")
         }
     }
+
+    pub fn concatenate_flag_and_bytes(&self) -> Vec<u8>{
+        let mut result = vec![];
+
+        result.extend(ObjectTypeLiteral::from(self.clone()).to_string().as_bytes());
+        result.push(TYPE_CONTENT_SEPARATOR);
+
+        match self {
+            Object::BlobObject(blob) => {
+                result.extend(blob.origin_content().bytes());
+            }
+            Object::TreeObject(tree) => {
+                result.extend(&tree.computed_obj_file_content());
+            }
+        }
+
+        result
+    }
+
+    pub fn set_tracked(&self){
+        match self {
+            Object::BlobObject(blob) => {blob.set_tracked()}
+            Object::TreeObject(tree) => {tree.set_tracked()}
+        }
+    }
 }
 
 type OID = String;
+
 trait Sha1Hash {
     fn sha1(&self) -> OID;
 }
+
 
 fn sha1_to_string(buf: &Vec<u8>) -> String {
     let hash_val = crypto::sha1(buf);

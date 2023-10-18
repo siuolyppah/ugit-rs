@@ -22,10 +22,14 @@ pub fn check_init() {
     }
 }
 
+pub fn is_dir_exist<P: AsRef<Path>>(path: P) -> bool {
+    Path::new(path.as_ref()).is_dir()
+}
+
 pub fn is_repo_dir_exist() -> bool {
-    Path::new(&UGIT_REPOSITORY_NAME).is_dir()
+    is_dir_exist(UGIT_REPOSITORY_NAME)
 }
 
 pub fn is_objects_dir_exist() -> bool {
-    Path::new(&UGIT_REPOSITORY_NAME).is_dir()
+    is_dir_exist(OBJECTS_DIR_PATH.deref())
 }

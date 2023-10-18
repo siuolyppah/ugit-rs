@@ -1,6 +1,5 @@
 use crate::fs_tools::{dirs, files};
-use crate::objects::blob::TYPE_CONTENT_SEPARATOR;
-use crate::objects::OID;
+use crate::objects::{OID, TYPE_CONTENT_SEPARATOR};
 use std::ops::Deref;
 use std::path::PathBuf;
 
@@ -23,7 +22,10 @@ pub fn read_obj_content(oid: OID) -> (String, Vec<u8>) {
         .iter()
         .position(|&x| x == TYPE_CONTENT_SEPARATOR)
     {
-        let (type_literal, origin_contents) = blob_content.split_at(sep_idx);
+        let (type_literal,mut  origin_contents) = blob_content.split_at(sep_idx);
+
+        // skip `0x00`
+        origin_contents = &origin_contents[1..];
 
         (
             String::from_utf8(type_literal.to_vec()).unwrap(),

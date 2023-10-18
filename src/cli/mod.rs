@@ -47,21 +47,24 @@ pub enum Commands {
 
     /// Compute object ID and optionally create an object from a file
     HashObject {
-        file: PathBuf,
+        path: PathBuf,
         /// Specify the type of object to be created.
         #[arg(short = 't', long = "type", value_enum, default_value_t = ObjectTypeLiteral::Blob)]
         obj_type: ObjectTypeLiteral,
     },
 
-    /// Provide content or type and size information for repository objects
+    /// Provide content or type and size information for repository objects.
     CatFile {
         oid: String,
         #[arg(short = 't', long = "type", value_enum, default_value_t = ObjectTypeLiteral::Blob)]
         expected_type: ObjectTypeLiteral,
     },
 
-    /// Create a tree object from the current index
+    /// Create a tree object from the current index.
     WriteTree {},
+
+    /// Reads tree information into the index.
+    ReadTree { oid: String },
 }
 
 pub fn run() {
@@ -70,9 +73,10 @@ pub fn run() {
     match cli.command {
         Some(Commands::Init {}) => init::cmd_init(),
         Some(Commands::Add { pathspec }) => add::cmd_add(pathspec),
-        Some(Commands::HashObject { file, obj_type }) => manage::cmd_hash_object(file, obj_type),
+        Some(Commands::HashObject { path, obj_type }) => manage::cmd_hash_object(path, obj_type),
         Some(Commands::CatFile { oid, expected_type }) => manage::cmd_cat_file(oid, expected_type),
         Some(Commands::WriteTree {}) => manage::cmd_write_tree(Path::new(".")),
+        Some(Commands::ReadTree { oid }) => manage::cmd_read_tree(oid),
         None => {
             // TODO: print help msg
         }

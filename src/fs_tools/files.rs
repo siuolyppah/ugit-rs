@@ -4,6 +4,9 @@ use std::{
     path::Path,
 };
 
+pub fn is_file_exist<P: AsRef<Path>>(path: P) -> bool {
+    Path::new(path.as_ref()).is_file()
+}
 pub fn read_content_to_end<P: AsRef<Path>>(path: P) -> Vec<u8> {
     let mut file = File::open(&path).expect("could not open file");
 

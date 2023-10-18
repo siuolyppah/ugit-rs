@@ -1,5 +1,6 @@
+use std::ops::Deref;
 use crate::fs_tools::dirs::check_init;
-use crate::fs_tools::files;
+use crate::fs_tools::{dirs, files};
 use crate::objects::blob::BlobObject;
 use crate::objects::tree::TreeObject;
 use crate::objects::type_literal::ObjectTypeLiteral;
@@ -13,13 +14,17 @@ pub mod tracked;
 /// 2. Read the file.
 /// 2. Hash the content of the file using SHA-1.
 /// 4. Store the file under ".ugit/objects/{the SHA-1 hash}".
-pub fn cmd_hash_object(file: PathBuf, obj_type: ObjectTypeLiteral) {
+pub fn cmd_hash_object(path: PathBuf, obj_type: ObjectTypeLiteral) {
     check_init();
 
-    // obj_type should be `blob`.
     match obj_type {
         ObjectTypeLiteral::Blob => {
-            let contents = files::read_content_to_end(file);
+            // should be file.
+            if !files::is_file_exist(path.clone()) {
+                panic!("the file path {} is wrong.", path.deref().display());
+            }
+
+            let contents = files::read_content_to_end(path);
             let blob = BlobObject::new(contents);
             let sha1 = blob.sha1();
 
@@ -27,8 +32,22 @@ pub fn cmd_hash_object(file: PathBuf, obj_type: ObjectTypeLiteral) {
 
             println!("{}", sha1)
         }
-        _ => unimplemented!(),
+
+        ObjectTypeLiteral::Tree=> {
+            // should be dir.
+            if !dirs::is_dir_exist(path.clone()){
+                panic!("the dir path {} is wrong.", path.deref().display());
+            }
+
+            let tree = TreeObject::from_origin_path(path);
+            let sha1 = tree.sha1();
+
+            tree.set_tracked();
+
+            println!("{}", sha1);
+        }
     }
+
 }
 
 /// This command is the "opposite" of hash-object: it can print an object by its `oid`.
@@ -75,5 +94,13 @@ pub fn cmd_write_tree<P: AsRef<Path>>(dir: P) {
     check_init();
 
     let tree = TreeObject::from_origin_path(dir);
+    tree.set_tracked();
+
     println!("{}", tree.oid());
+}
+
+/// revert work dir from repo index.
+pub fn cmd_read_tree(oid: String) {
+    let tree = TreeObject::from_tree_obj_oid(oid);
+    println!("{:#?}", tree)
 }
