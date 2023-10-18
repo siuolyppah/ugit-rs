@@ -1,8 +1,9 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand};
 
-use crate::objects::{self, git_obj::GitObjectType};
+use crate::objects::manage;
+use crate::objects::type_literal::ObjectTypeLiteral;
 
 pub mod add;
 pub mod init;
@@ -34,7 +35,7 @@ pub enum Commands {
     /// cargo run -- add abc.txt foo.txt
     /// ```
     Add {
-        /// Files to add content from. Fileglobs (e.g. *.c) can be given to add all matching files.
+        /// Files to add content from. File globs (e.g. *.c) can be given to add all matching files.
         /// Also a leading directory name (e.g.  dir to add dir/file1 and dir/file2) can be given to
         /// update the index to match the current state of the directory as a whole (e.g. specifying
         /// dir will record not just a file dir/file1 modified in the working tree, a file dir/file2
@@ -48,16 +49,19 @@ pub enum Commands {
     HashObject {
         file: PathBuf,
         /// Specify the type of object to be created.
-        #[arg(short = 't', long = "type", value_enum, default_value_t = GitObjectType::Blob)]
-        obj_type: GitObjectType,
+        #[arg(short = 't', long = "type", value_enum, default_value_t = ObjectTypeLiteral::Blob)]
+        obj_type: ObjectTypeLiteral,
     },
 
     /// Provide content or type and size information for repository objects
     CatFile {
         oid: String,
-        #[arg(short = 't', long = "type", value_enum, default_value_t = GitObjectType::Blob)]
-        expected_type: GitObjectType,
+        #[arg(short = 't', long = "type", value_enum, default_value_t = ObjectTypeLiteral::Blob)]
+        expected_type: ObjectTypeLiteral,
     },
+
+    /// Create a tree object from the current index
+    WriteTree {},
 }
 
 pub fn run() {
@@ -66,8 +70,9 @@ pub fn run() {
     match cli.command {
         Some(Commands::Init {}) => init::cmd_init(),
         Some(Commands::Add { pathspec }) => add::cmd_add(pathspec),
-        Some(Commands::HashObject { file, obj_type }) => objects::cmd_hash_object(file, obj_type),
-        Some(Commands::CatFile { oid, expected_type }) => objects::cmd_cat_file(oid, expected_type),
+        Some(Commands::HashObject { file, obj_type }) => manage::cmd_hash_object(file, obj_type),
+        Some(Commands::CatFile { oid, expected_type }) => manage::cmd_cat_file(oid, expected_type),
+        Some(Commands::WriteTree {}) => manage::cmd_write_tree(Path::new(".")),
         None => {
             // TODO: print help msg
         }

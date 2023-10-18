@@ -16,6 +16,12 @@ pub fn create_objects_dir() -> io::Result<()> {
     fs::create_dir(&OBJECTS_DIR_PATH.deref())
 }
 
+pub fn check_init() {
+    if !(is_repo_dir_exist() && is_objects_dir_exist()) {
+        panic!("please init first.")
+    }
+}
+
 pub fn is_repo_dir_exist() -> bool {
     Path::new(&UGIT_REPOSITORY_NAME).is_dir()
 }
