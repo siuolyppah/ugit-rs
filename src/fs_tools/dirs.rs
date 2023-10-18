@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 use std::{fs, io, ops::Deref, path::Path};
 
-pub const UGIT_REPOSITORY_NAME: &str = ".ugit";
+pub const UGIT_REPOSITORY_NAME: &str = ".ugit-rs";
 pub const OBJECTS_DIR_NAME: &str = "objects";
 pub static OBJECTS_DIR_PATH: Lazy<String> =
     Lazy::new(|| format!("{}/{}", UGIT_REPOSITORY_NAME, OBJECTS_DIR_NAME));

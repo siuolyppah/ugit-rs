@@ -5,16 +5,17 @@
 
 use std::{ops::Deref, path::PathBuf};
 
-use crate::{
-    crypto,
-    fs_tools::{dirs, files},
-};
+use crate::fs_tools::{dirs, files};
+
+use self::git_obj::{GitObject, GitObjectType};
+
+pub mod git_obj;
 
 /// 1. Get the path of the file to store.
 /// 2. Read the file.
 /// 2. Hash the content of the file using SHA-1.
 /// 4. Store the file under ".ugit/objects/{the SHA-1 hash}".
-pub fn cmd_hash_object(file: PathBuf) {
+pub fn cmd_hash_object(file: PathBuf, obj_type: GitObjectType) {
     if !dirs::is_objects_dir_exist() {
         eprintln!(
             "fatal: not a ugit repository (or any of the parent directories): {}",
@@ -25,29 +26,37 @@ pub fn cmd_hash_object(file: PathBuf) {
     }
 
     let contents = files::read_content_to_end(file);
-    let oid = get_oid(&contents);
+    let git_obj = GitObject::new(&contents, obj_type);
 
-    store_object(&oid, &contents);
+    let oid = git_obj.get_oid_by_sha1();
+
+    store_object(&oid, &git_obj.collect_bytes());
 
     println!("{}", oid);
 }
 
 /// This command is the "opposite" of hash-object: it can print an object by its `oid`.
 /// Its implementation just reads the file at `.ugit/objects/{oid}`.
-pub fn cmd_cat_file(oid: String) {
+pub fn cmd_cat_file(oid: String, expected_type: GitObjectType) {
     let obj_path = format!("{}/{}", &dirs::OBJECTS_DIR_PATH.deref(), oid);
-    let contents = files::read_content_to_end(obj_path);
+    let file_contents = files::read_content_to_end(obj_path);
 
-    println!("{}", String::from_utf8(contents).unwrap());
-}
-
-/// hexadecimal representation of the result of the SHA-1 hash.
-///
-/// "OID" - object ID
-pub fn get_oid(u8s: &Vec<u8>) -> String {
-    let hash_val = crypto::sha1(&u8s);
-
-    hex::encode(&hash_val)
+    match GitObject::try_from(&file_contents[..]) {
+        Ok(git_obj) => {
+            if git_obj.obj_type() != expected_type {
+                eprintln!(
+                    "expected obj type {:?}, got {:?}",
+                    expected_type,
+                    git_obj.obj_type()
+                );
+            } else {
+                print!("{}", git_obj.string_of_content());
+            }
+        }
+        Err(e) => {
+            eprintln!("{:?}", e)
+        }
+    }
 }
 
 pub fn store_object(oid: &str, u8s: &[u8]) {

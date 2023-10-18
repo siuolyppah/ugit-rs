@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-use crate::objects;
+use crate::objects::{self, git_obj::GitObjectType};
 
 pub mod add;
 pub mod init;
@@ -45,22 +45,19 @@ pub enum Commands {
     },
 
     /// Compute object ID and optionally create an object from a file
-    ///
-    /// # Example
-    ///
-    /// ```shell
-    /// cargo r -- hash-object foo.txt
-    /// ```
-    HashObject { file: PathBuf },
+    HashObject {
+        file: PathBuf,
+        /// Specify the type of object to be created.
+        #[arg(short = 't', long = "type", value_enum, default_value_t = GitObjectType::Blob)]
+        obj_type: GitObjectType,
+    },
 
     /// Provide content or type and size information for repository objects
-    ///
-    /// # Example
-    ///
-    /// ```shell
-    /// cargo r -- cat-file c254a8e49ef377fe15554aa37ad91bb97264e50f
-    /// ```
-    CatFile { oid: String },
+    CatFile {
+        oid: String,
+        #[arg(short = 't', long = "type", value_enum, default_value_t = GitObjectType::Blob)]
+        expected_type: GitObjectType,
+    },
 }
 
 pub fn run() {
@@ -69,8 +66,8 @@ pub fn run() {
     match cli.command {
         Some(Commands::Init {}) => init::cmd_init(),
         Some(Commands::Add { pathspec }) => add::cmd_add(pathspec),
-        Some(Commands::HashObject { file }) => objects::cmd_hash_object(file),
-        Some(Commands::CatFile { oid }) => objects::cmd_cat_file(oid),
+        Some(Commands::HashObject { file, obj_type }) => objects::cmd_hash_object(file, obj_type),
+        Some(Commands::CatFile { oid, expected_type }) => objects::cmd_cat_file(oid, expected_type),
         None => {
             // TODO: print help msg
         }
