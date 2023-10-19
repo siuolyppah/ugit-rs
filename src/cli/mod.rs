@@ -19,21 +19,9 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Create an empty Git repository or reinitialize an existing one
-    ///
-    /// # Example
-    ///
-    /// ```shell
-    /// cargo run -- init
-    /// ```
     Init {},
 
     /// Add file contents to the index
-    ///
-    /// # Example
-    ///
-    /// ```shell
-    /// cargo run -- add abc.txt foo.txt
-    /// ```
     Add {
         /// Files to add content from. File globs (e.g. *.c) can be given to add all matching files.
         /// Also a leading directory name (e.g.  dir to add dir/file1 and dir/file2) can be given to

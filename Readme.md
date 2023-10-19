@@ -5,7 +5,7 @@ Only support [a useful minimum set of commands in `git`](https://github.com/git/
 > this repo was inspired by [`ugit`](https://www.leshenko.net/p/ugit/#)
 
 
-# Workflow
+# Workflow Example
 
 > install: `cargo install --path .`
 
@@ -58,7 +58,6 @@ $ ugit-rs read-tree  8f87a4d4ce075e840b89cbd52e030f84e1345b1c
 
 ## feature
 
-- [x] add hash-object type in cmd `hash-object` and `cat-file` .  
 - [ ] support glob
 - [ ] parse `.ignore` file
 

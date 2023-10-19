@@ -7,7 +7,7 @@ pub fn cmd_init() {
         Ok(_) => {}
         Err(e) => {
             if e.kind() == io::ErrorKind::AlreadyExists {
-                eprintln!("this repo has inited.");
+                eprintln!("this repo has initialized.");
                 return;
             } else {
                 eprintln!("init error: {}", e);
