@@ -54,7 +54,11 @@ pub fn empty_cwd() {
     } else {
         delete_all_under(
             &cwd,
-            vec![&PathBuf::from_str(UGIT_REPOSITORY_NAME).unwrap()],
+            // TODO
+            vec![
+                &PathBuf::from_str(UGIT_REPOSITORY_NAME).unwrap(),
+                &PathBuf::from_str(".git").unwrap(),
+            ],
         );
     }
 }
