@@ -10,10 +10,12 @@ use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::{crypto::Sha1HashAble, objects::blob::BlobObject};
 
 use self::db::{insert::ObjectInsert, query, OID};
+pub use cmd::*;
 
 pub mod blob;
+pub mod cmd;
 pub mod db;
-pub mod manage;
+pub mod ignored;
 pub mod tree;
 pub mod tree_entry;
 pub mod type_literal;

@@ -4,6 +4,7 @@ use crate::fs_tools::dirs;
 
 pub mod insert;
 pub mod query;
+pub mod restore;
 
 pub type OID = String;
 

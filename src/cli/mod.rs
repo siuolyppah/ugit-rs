@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand};
 
-use crate::objects::manage;
+use crate::objects;
 use crate::objects::type_literal::ObjectTypeLiteral;
 
 pub mod add;
@@ -61,10 +61,10 @@ pub fn run() {
     match cli.command {
         Some(Commands::Init {}) => init::cmd_init(),
         Some(Commands::Add { pathspec }) => add::cmd_add(pathspec),
-        Some(Commands::HashObject { path, obj_type }) => manage::cmd_hash_object(path, obj_type),
-        Some(Commands::CatFile { oid, expected_type }) => manage::cmd_cat_file(oid, expected_type),
-        Some(Commands::WriteTree {}) => manage::cmd_write_tree(Path::new(".")),
-        Some(Commands::ReadTree { oid }) => manage::cmd_read_tree(oid),
+        Some(Commands::HashObject { path, obj_type }) => objects::cmd_hash_object(path, obj_type),
+        Some(Commands::CatFile { oid, expected_type }) => objects::cmd_cat_file(oid, expected_type),
+        Some(Commands::WriteTree {}) => objects::cmd_write_tree(Path::new(".")),
+        Some(Commands::ReadTree { oid }) => objects::cmd_read_tree(oid),
         None => {
             // TODO: print help msg
         }

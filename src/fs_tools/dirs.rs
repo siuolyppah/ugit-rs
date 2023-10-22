@@ -18,7 +18,7 @@ pub fn create_objects_dir() -> io::Result<()> {
 
 pub fn check_init() {
     if !(is_repo_dir_exist() && is_objects_dir_exist()) {
-        panic!("please init first.")
+        print_and_exit!("please init first")
     }
 }
 

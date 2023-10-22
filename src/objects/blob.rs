@@ -34,8 +34,8 @@ impl BlobObject {
         obj
     }
 
-    pub fn origin_content(&self) -> String {
-        String::from_utf8(self.origin_content.clone()).unwrap()
+    pub fn origin_content(&self) -> &Vec<u8> {
+        &self.origin_content
     }
 
     /// origin file path -> Self
@@ -59,7 +59,7 @@ impl BlobObject {
         result.extend(ObjectTypeLiteral::Blob.to_string().as_bytes());
         result.push(TYPE_CONTENT_SEPARATOR);
 
-        result.extend(self.origin_content().bytes());
+        result.extend(self.origin_content());
 
         result
     }

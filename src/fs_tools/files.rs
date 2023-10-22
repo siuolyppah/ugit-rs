@@ -1,7 +1,7 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 pub fn is_file_exist<P: AsRef<Path>>(path: P) -> bool {
@@ -17,9 +17,17 @@ pub fn read_content_to_end<P: AsRef<Path>>(path: P) -> Vec<u8> {
 }
 
 pub fn store_file<P: AsRef<Path>>(path: P, bytes: &[u8]) {
-    let mut file = File::create(path).expect("create file fail.");
+    let path = PathBuf::from(path.as_ref());
 
-    file.write_all(bytes).expect("write to file fail.");
+    if let Some(parent_dir) = path.parent() {
+        if !parent_dir.exists() {
+            fs::create_dir_all(parent_dir).unwrap();
+        }
+    }
 
-    file.flush().expect("flush fail.");
+    let mut file = File::create(path).expect("create file fail");
+
+    file.write_all(bytes).expect("write to file fail");
+
+    file.flush().expect("flush fail");
 }

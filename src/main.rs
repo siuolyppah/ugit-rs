@@ -1,3 +1,6 @@
+#[macro_use]
+mod unexpected;
+
 mod cli;
 mod crypto;
 mod fs_tools;

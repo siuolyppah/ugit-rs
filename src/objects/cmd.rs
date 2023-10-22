@@ -3,13 +3,12 @@ use crate::fs_tools::dirs::check_init;
 use crate::fs_tools::{dirs, files};
 use crate::objects::blob::BlobObject;
 use crate::objects::db::insert::ObjectInsert;
+use crate::objects::db::restore::ObjectRestore;
 use crate::objects::tree::TreeObject;
 use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::Object;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-
-pub mod ignored;
 
 /// file(or dir) with given path -> Object
 /// and the object will stored in database.
@@ -70,7 +69,10 @@ pub fn cmd_cat_file(oid: String, expected_type: ObjectTypeLiteral) {
                     ObjectTypeLiteral::Blob
                 );
             } else {
-                print!("{}", blob.origin_content());
+                print!(
+                    "{}",
+                    String::from_utf8(blob.origin_content().to_owned()).unwrap()
+                );
             }
         }
         Object::TreeObject(tree) => {
@@ -105,5 +107,8 @@ pub fn cmd_write_tree<P: AsRef<Path>>(dir: P) {
 /// revert work dir from repo index.
 pub fn cmd_read_tree(oid: String) {
     let tree = TreeObject::from_tree_obj_oid(oid);
+
+    tree.restore();
+
     println!("{:#?}", tree)
 }

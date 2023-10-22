@@ -62,6 +62,4 @@ $ ugit-rs read-tree  8f87a4d4ce075e840b89cbd52e030f84e1345b1c
 
 ## fix
 
-- [ ] write-tree should keep **origin file path after root**.
 - [ ] exclude `.ugit-rs` dir.
-

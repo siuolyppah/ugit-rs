@@ -1,7 +1,6 @@
 use crate::crypto::{sha1_to_string, Sha1HashAble};
-use crate::fs_tools::paths;
+use crate::fs_tools::{files, paths};
 use crate::objects::blob::BlobObject;
-use crate::objects::manage::ignored;
 use crate::objects::tree_entry::TreeVitrualFileEntry;
 use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::{Object, OID};
@@ -11,7 +10,8 @@ use std::path::Path;
 
 use super::db::insert::{self, ObjectInsert};
 use super::db::query;
-use super::TYPE_CONTENT_SEPARATOR;
+use super::db::restore::ObjectRestore;
+use super::{ignored, TYPE_CONTENT_SEPARATOR};
 
 pub const TREE_ENTRY_SEPARATE_STRING: &str = "\n";
 
@@ -49,7 +49,7 @@ impl Debug for TreeObject {
             .map(|(origin_relative_path, obj)| match obj {
                 Object::BlobObject(blob) => HumanReadable::File {
                     origin_relative_path,
-                    origin_content: blob.origin_content(),
+                    origin_content: String::from_utf8(blob.origin_content().to_owned()).unwrap(),
                 },
                 Object::TreeObject(tree) => HumanReadable::Dir {
                     origin_relative_path,
@@ -174,5 +174,27 @@ impl ObjectInsert for TreeObject {
 impl Sha1HashAble for TreeObject {
     fn sha1(&self) -> OID {
         self.oid()
+    }
+}
+
+impl TreeObject {
+    fn _restore(&self) {
+        for (origin_file_name, obj) in &self.children {
+            match obj {
+                Object::BlobObject(blob) => {
+                    files::store_file(origin_file_name, &blob.origin_content())
+                }
+                Object::TreeObject(tree) => {
+                    tree._restore();
+                }
+            }
+        }
+    }
+}
+
+impl ObjectRestore for TreeObject {
+    fn restore(&self) {
+        paths::empty_cwd();
+        self._restore();
     }
 }
