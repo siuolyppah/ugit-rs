@@ -1,7 +1,6 @@
 use std::{
     env, fs,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use super::dirs::UGIT_REPOSITORY_NAME;
@@ -55,22 +54,26 @@ pub fn empty_cwd() {
         delete_all_under(
             &cwd,
             // TODO
-            vec![
-                &PathBuf::from_str(UGIT_REPOSITORY_NAME).unwrap(),
-                &PathBuf::from_str(".git").unwrap(),
-            ],
+            vec![UGIT_REPOSITORY_NAME, ".git", ".gitignore"],
         );
     }
 }
 
-fn delete_all_under(root: &Path, excludes: Vec<&Path>) {
+fn delete_all_under(root: &Path, excludes: Vec<&str>) {
     fs::read_dir(root)
         .unwrap()
-        .map(|e| e.unwrap())
-        .filter(|e| !excludes.contains(&e.path().as_path()))
-        .for_each(|e| {
-            let path = e.path();
-            if e.path().is_dir() {
+        .map(|entry| entry.unwrap())
+        .filter(|entry| {
+            let binding = entry.path();
+            let entry_str = binding.as_path().as_os_str().to_str().unwrap();
+
+            excludes.iter().all(|exclude| !entry_str.contains(exclude))
+
+            // !excludes.contains(&e.path().as_path())
+        })
+        .for_each(|entry| {
+            let path = entry.path();
+            if entry.path().is_dir() {
                 fs::remove_dir_all(path).unwrap();
             } else {
                 fs::remove_file(path).unwrap();
