@@ -46,6 +46,9 @@ $ ugit-rs read-tree  8f87a4d4ce075e840b89cbd52e030f84e1345b1c
 
 # TODO
 
+- [] reset excluded files when hash-object(`write-tree`)
+  and excluded files when empty cwd(`read-tree`).
+
 ## cmd
 
 - [x] `init`

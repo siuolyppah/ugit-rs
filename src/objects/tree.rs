@@ -1,4 +1,3 @@
-use crate::crypto::{sha1_to_string, Sha1HashAble};
 use crate::fs_tools::{files, paths};
 use crate::objects::blob::BlobObject;
 use crate::objects::tree_entry::TreeVitrualFileEntry;
@@ -11,7 +10,7 @@ use std::path::Path;
 use super::db::insert::{self, ObjectInsert};
 use super::db::query;
 use super::db::restore::ObjectRestore;
-use super::{ignored, TYPE_CONTENT_SEPARATOR};
+use super::{ignored, ObjectFileContent, ObjectVirtualContent, OidComputable};
 
 pub const TREE_ENTRY_SEPARATE_STRING: &str = "\n";
 
@@ -94,7 +93,8 @@ impl TreeObject {
 
     /// dir(and files in it) with given path -> Self
     ///
-    /// # PERF: expensive, this fn was impled by walkthrough the `origin_root_dir`.
+    /// # PERF: expensive, this fn was impled by walkthrough the `origin_root_dir`
+    ///
     pub fn from_origin_dir<P: AsRef<Path>>(origin_root_dir: P) -> Self {
         Self::_from_origin_dir(origin_root_dir.as_ref(), origin_root_dir.as_ref())
     }
@@ -121,11 +121,9 @@ impl TreeObject {
 
         Self::from_obj_content(obj_content_after_type)
     }
+}
 
-    pub fn oid(&self) -> OID {
-        sha1_to_string(&self.computed_obj_file_content())
-    }
-
+impl ObjectVirtualContent for TreeObject {
     /// tree object could be regarded as a virtual file.
     /// the file content is collected from its children objects.
     ///
@@ -136,7 +134,7 @@ impl TreeObject {
     /// tree 53891a3c27b17e0f8fd96c058f968d19e340428d other
     /// blob fa958e0dd2203e9ad56853a3f51e5945dad317a4 other/dogs.txt
     /// ```
-    pub fn computed_obj_file_content(&self) -> Vec<u8> {
+    fn obj_virtual_content(&self) -> Vec<u8> {
         self.children
             .iter()
             .map(|(origin_file_name, obj)| {
@@ -147,33 +145,15 @@ impl TreeObject {
             .as_bytes()
             .to_vec()
     }
-
-    /// get bytes that will be *stored in object file* or *hashed by SHA1*.
-    pub fn bytes_for_sha1(&self) -> Vec<u8> {
-        let mut result = vec![];
-
-        result.extend(ObjectTypeLiteral::Tree.to_string().as_bytes());
-        result.push(TYPE_CONTENT_SEPARATOR);
-
-        result.extend(&self.computed_obj_file_content());
-
-        result
-    }
 }
 
 impl ObjectInsert for TreeObject {
     fn insert_into_db(&self) {
-        insert::save_into_object_file(&self.bytes_for_sha1(), &self.oid());
+        insert::save_into_object_file(&self.obj_file_content(), &self.oid());
 
         self.children.iter().for_each(|(_, child)| {
             child.insert_into_db();
         })
-    }
-}
-
-impl Sha1HashAble for TreeObject {
-    fn sha1(&self) -> OID {
-        self.oid()
     }
 }
 

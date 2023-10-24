@@ -4,6 +4,8 @@ use crate::objects::type_literal::ObjectTypeLiteral;
 use crate::objects::{Object, OID};
 use std::fmt::{Display, Formatter};
 
+use super::OidComputable;
+
 /// A `TreeObject` corresponds a list of `Self`.
 ///
 /// the `TreeVitrualFileEntry` stored in file with follow format:

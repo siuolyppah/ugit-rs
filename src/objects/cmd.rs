@@ -1,4 +1,3 @@
-use crate::crypto::Sha1HashAble;
 use crate::fs_tools::dirs::check_init;
 use crate::fs_tools::{dirs, files};
 use crate::objects::blob::BlobObject;
@@ -6,7 +5,7 @@ use crate::objects::db::insert::ObjectInsert;
 use crate::objects::db::restore::ObjectRestore;
 use crate::objects::tree::TreeObject;
 use crate::objects::type_literal::ObjectTypeLiteral;
-use crate::objects::Object;
+use crate::objects::{Object, ObjectVirtualContent, OidComputable};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
@@ -24,30 +23,30 @@ pub fn cmd_hash_object(path: PathBuf, obj_type: ObjectTypeLiteral) {
         ObjectTypeLiteral::Blob => {
             // must be file.
             if !files::is_file_exist(path.clone()) {
-                panic!("the file path {} is wrong.", path.deref().display());
+                print_and_exit!("the file path {} is wrong.", path.deref().display());
             }
 
             let contents = files::read_content_to_end(path);
             let blob = BlobObject::new(contents);
-            let sha1 = blob.sha1();
+            let oid = blob.oid();
 
             blob.insert_into_db();
 
-            println!("{}", sha1)
+            println!("{}", oid)
         }
 
         ObjectTypeLiteral::Tree => {
             // must be dir.
             if !dirs::is_dir_exist(path.clone()) {
-                panic!("the dir path {} is wrong.", path.deref().display());
+                print_and_exit!("the dir path {} is wrong.", path.deref().display());
             }
 
             let tree = TreeObject::from_origin_dir(path);
-            let sha1 = tree.sha1();
+            let oid = tree.oid();
 
             tree.insert_into_db();
 
-            println!("{}", sha1);
+            println!("{}", oid);
         }
     }
 }
@@ -84,10 +83,7 @@ pub fn cmd_cat_file(oid: String, expected_type: ObjectTypeLiteral) {
                     ObjectTypeLiteral::Tree
                 );
             } else {
-                print!(
-                    "{}",
-                    String::from_utf8(tree.computed_obj_file_content()).unwrap()
-                );
+                print!("{}", String::from_utf8(tree.obj_virtual_content()).unwrap());
             }
         }
     }
